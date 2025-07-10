@@ -10,7 +10,7 @@
   #### n8n
   #### LLM API - gemini, chatgpt
   #### Database - pine cone
-  #### API - goog;e products, meta, telagram
+  #### API - google products, meta, telagram
 
 ## how to use in your project :
   #### 1. install n8n or use cloud n8n
