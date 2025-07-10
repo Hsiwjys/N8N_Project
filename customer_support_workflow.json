@@ -1,0 +1,418 @@
+{
+  "name": "customer support workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "b588df14-6cc0-458f-804a-a7c0f81db781",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "m2m7QBk5PddKvFcN",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $json.text }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "other",
+              "description": "anything that is not  Samsung galaxy 25 related  "
+            },
+            {
+              "category": "samsung s25",
+              "description": "An email that related to helping out a customer, they may ask questions about our Samsung galaxy S25 or other features"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1.1,
+      "position": [
+        200,
+        0
+      ],
+      "id": "169dd63a-54af-45b3-b6fb-dffdccef476f",
+      "name": "Text Classifier"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash-preview-05-20",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        240,
+        200
+      ],
+      "id": "eabafdb5-95b0-48b0-ad3b-1af10dd25d39",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "qxUN951wqSdsv8U2",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        580,
+        -100
+      ],
+      "id": "f0d737c4-7666-459b-94d0-64c88fb77a60",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "options": {
+          "systemMessage": "=# Overview\n\nyour are customber support agent for Siva.Your job to response to incomming emails with relevant using your personal tool.\n\n##Instructions\n\n- your output should be friendly and with emojis.\n- Sign off with Mr.Ai Agent from Siva P solutions.\n\n## output\n\n- output only the body content of the email"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        560,
+        60
+      ],
+      "id": "4761fb09-fa39-47a4-9985-d5895e4fb410",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash-preview-05-20",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        580,
+        280
+      ],
+      "id": "4158b89c-61f7-4062-8bc6-48209406d807",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "qxUN951wqSdsv8U2",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolName": "personal",
+        "toolDescription": "Call this tool to access the Samsung galaxy S25 information",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "demo-n8n",
+          "mode": "list",
+          "cachedResultName": "demo-n8n"
+        },
+        "topK": 5,
+        "options": {
+          "pineconeNamespace": "samsung s25.pdf"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.2,
+      "position": [
+        720,
+        280
+      ],
+      "id": "61dbdfc8-c281-4c52-b21f-982509a8db2f",
+      "name": "Pinecone Vector Store",
+      "credentials": {
+        "pineconeApi": {
+          "id": "CqnSRZc5Ngjeg2Be",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/text-embedding-004"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        840,
+        380
+      ],
+      "id": "252da6ee-d056-48f9-b740-752e5642c45b",
+      "name": "Embeddings Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "qxUN951wqSdsv8U2",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "CATEGORY_UPDATES"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        920,
+        60
+      ],
+      "id": "dadf388e-888b-4ee1-b439-68c789832b88",
+      "name": "Adding a label",
+      "webhookId": "549355f4-4250-4204-9ee2-0eca4ba3d341",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "m2m7QBk5PddKvFcN",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "reply",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "emailType": "text",
+        "message": "={{ $('AI Agent').item.json.output }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1360,
+        60
+      ],
+      "id": "3e7e3c6c-15a9-4781-bed4-fe87a881442d",
+      "name": "Replay for query by customer",
+      "webhookId": "76d30783-ee91-42f2-94a7-e3f3803eff11",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "m2m7QBk5PddKvFcN",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Customer Support Automation\n### 🧩 Purpose\nAutomatically handle customer queries received via Gmail using AI-powered responses, classification, and labeling.\n\n### 🔄 Workflow Steps\nGmail Trigger\n\nTriggers on receiving a new email (customer query).\n\nText Classifier\n\nAnalyzes email text and categorizes the query.\n\nRoutes to AI if it's a known product (e.g., \"Samsung S25\").\n\nSends to \"No Operation\" if irrelevant.\n\nAI Agent\n\nUses Google Gemini Chat model to understand the customer query.\n\nIntegrates with:\n\nEmbeddings Generator for context.\n\nPinecone Vector Store for semantic memory (product FAQs, past queries).\n\nAdd Label\n\nTags the email (e.g., “Replied”, “Handled”) for tracking.\n\nReply to Customer\n\nSends an automatic response with product details or answers.\n\n### 🤖 AI Models Used\nGoogle Gemini Chat Model (x2): Understanding + Memory context.\n\nEmbeddings Generator (Google Gemini): To convert queries into vector form.\n\nPinecone: Stores and retrieves vectorized queries and context.",
+        "height": 900,
+        "width": 340,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -360,
+        -260
+      ],
+      "typeVersion": 1,
+      "id": "8ff53c5b-d9f5-47c0-921f-688bbfc0838d",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {
+    "Gmail Trigger": [
+      {
+        "json": {
+          "id": "1973ea99437856c9",
+          "threadId": "1973ea99437856c9",
+          "labelIds": [
+            "UNREAD",
+            "IMPORTANT",
+            "CATEGORY_PERSONAL",
+            "INBOX"
+          ],
+          "sizeEstimate": 5667,
+          "headers": {
+            "delivered-to": "Delivered-To: sivapushparaj274@gmail.com",
+            "received": "Received: from mail-sor-f41.google.com (mail-sor-f41.google.com. [209.85.220.41])\r\n        by mx.google.com with SMTPS id 00721157ae682-710dc88d162sor18726477b3.16.2025.06.04.22.56.30\r\n        for <sivapushparaj274@gmail.com>\r\n        (Google Transport Security);\r\n        Wed, 04 Jun 2025 22:56:30 -0700 (PDT)",
+            "x-received": "X-Received: by 2002:a05:690c:640d:b0:70d:ed5d:b4bf with SMTP id\r\n 00721157ae682-710d9f35dd9mr77914117b3.24.1749102990144; Wed, 04 Jun 2025\r\n 22:56:30 -0700 (PDT)",
+            "arc-seal": "ARC-Seal: i=1; a=rsa-sha256; t=1749102990; cv=none;\r\n        d=google.com; s=arc-20240605;\r\n        b=Xoy/GME0q1VmLrTZF0GKgvTgaVLvV+wVYnyEK9F1zVLffIiukXq+IUupf3RcWZSYBL\r\n         c80cMMIHdZVjems4jzHvcPGj2BpsoQNUZGet37S8IlRO7PKz4tigUCmNUN8UEpKmm3JV\r\n         nXCbj9g0RmUP5knaWJXFESCZO5ndHTYnob5Mi8CuQzmmxFt62+DyjNV/SiNQSEP3Nlnx\r\n         QVpyLJho4jiOUX9AxvK7579o+SB613SonoJCO/xogs9F0BZgA2PcAu5t839KHJmbev3/\r\n         +sUFRCVfUmZ2QsrDaWmod93dHRO70RWb2aRtofo9aINC7IpKzxMSEcbfQIougAub/9qw\r\n         lysQ==",
+            "arc-message-signature": "ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;\r\n        h=to:subject:message-id:date:from:mime-version:dkim-signature;\r\n        bh=2P0Avjl1yMsNCCDeiC6C1I0i1rD4JKDCQg5JO47bL0c=;\r\n        fh=kTSMPuwysY5JY08RHBR725/KNwGpxweVbw8pt4yWoYY=;\r\n        b=Ev4eIZKEVjif0t6Fr/vYH8fmuRT+3ugv9bt7wAVIi5oDlzWP/KQ4Dn+0Vsy+G9y6pV\r\n         ftnDWXXf7ZJHhfnqJyDE7LGiGRgWEcZpA0Gat35vucAfO5kOH5R3/72PFc0ElgQI/c4A\r\n         Z6ZT26KZUjBQigdLFYKSY1snr0q6v7VTg/hX8z416Yv5G0liHnXN3gYFx5HUWRAS6ZUs\r\n         MozXzW//FJM8uZSAvymW6s9rLGB0VRxIxyjAuNFWR1i39erbQZ1M65qRtVfNT9kLovX0\r\n         cV790zgBm6Hxt47U4ifSzAbZZaolsz1hR3fd2PtsKwfOiR2yTWUVGqZdCVzRK4/utjLI\r\n         8X/g==;\r\n        dara=google.com",
+            "arc-authentication-results": "ARC-Authentication-Results: i=1; mx.google.com;\r\n       dkim=pass header.i=@gmail.com header.s=20230601 header.b=kG98ts1P;\r\n       spf=pass (google.com: domain of sivaalgebra27@gmail.com designates 209.85.220.41 as permitted sender) smtp.mailfrom=sivaalgebra27@gmail.com;\r\n       dmarc=pass (p=NONE sp=QUARANTINE dis=NONE) header.from=gmail.com;\r\n       dara=pass header.i=@gmail.com",
+            "return-path": "Return-Path: <sivaalgebra27@gmail.com>",
+            "received-spf": "Received-SPF: pass (google.com: domain of sivaalgebra27@gmail.com designates 209.85.220.41 as permitted sender) client-ip=209.85.220.41;",
+            "authentication-results": "Authentication-Results: mx.google.com;\r\n       dkim=pass header.i=@gmail.com header.s=20230601 header.b=kG98ts1P;\r\n       spf=pass (google.com: domain of sivaalgebra27@gmail.com designates 209.85.220.41 as permitted sender) smtp.mailfrom=sivaalgebra27@gmail.com;\r\n       dmarc=pass (p=NONE sp=QUARANTINE dis=NONE) header.from=gmail.com;\r\n       dara=pass header.i=@gmail.com",
+            "dkim-signature": "DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;\r\n        d=gmail.com; s=20230601; t=1749102990; x=1749707790; dara=google.com;\r\n        h=to:subject:message-id:date:from:mime-version:from:to:cc:subject\r\n         :date:message-id:reply-to;\r\n        bh=2P0Avjl1yMsNCCDeiC6C1I0i1rD4JKDCQg5JO47bL0c=;\r\n        b=kG98ts1PHHWhhm9oyTOe0MxhqFrp8DQ1ykQRtPKxB9vBdD4h2AN2z55EL0iI9SvJMl\r\n         HPYVUzQipcmfdvPBumPWya4cFJ4m+ua/eWXRSzUTBEQXq0gtwLztMwN36bdm9531RfOA\r\n         ymYVTJf0y8WOq+kCUAdu02NY+VlbK8srVSurGnSAfSipU9ODZs5XZw9/cUQkzakjsFid\r\n         tGzF35tIWV0qj7q8u9aHqZz5eYOXPzVU3hB8vXpNkXBSsdNZ80ZTjf2h4KjiwoPYrBiI\r\n         ow2SF6Fa8gOANIgwNJf8pVV0mCssiO935aAD2BbF7tvX/eWsIJdWK1PHy+VHYPKbjI6w\r\n         sRWw==",
+            "x-google-dkim-signature": "X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;\r\n        d=1e100.net; s=20230601; t=1749102990; x=1749707790;\r\n        h=to:subject:message-id:date:from:mime-version:x-gm-message-state\r\n         :from:to:cc:subject:date:message-id:reply-to;\r\n        bh=2P0Avjl1yMsNCCDeiC6C1I0i1rD4JKDCQg5JO47bL0c=;\r\n        b=Seag6CFyugnFoVR3IW0lvJEJVV4fC/50WnM/GjdG47hKzyj5IL3FtUl2Ye90Amax8S\r\n         Y0Ch5lhEt4KqMtDW0grxReEl8/X2XMY2B3waqKEBFzEkVa9U/ZfqrSTCI0pUSRsdENRr\r\n         mmhMjmCU4rsWiuFosFmEsLGXPUmgtgwkd2g+yEphGLq0X7cTa69zDj9y6/LJng5N+5lB\r\n         vY4ifyuLp/6QIsdbWcURuVAV60ypnH+tIu/lds/jDWb2BXM9IQsft9uV1paYJEZqPjl0\r\n         Jm+jMAkCb9Q0MmtCvHG7AaRtAY3EOjcPHnMK4xVG3ki0F8AAgD+S1K8jWU6HhQSWjV7G\r\n         Bs0w==",
+            "x-gm-message-state": "X-Gm-Message-State: AOJu0YxG7/sw8mXv3Kp5xJQFJum32gY8BodEAji6Dw/QoLO1nZUB3tjg\r\n\tRR9Dj4fbCQsrdrve0kas8BtgXDdEAF+6YUDJu0AKcjTiOp6jRH2CfF0K0YI127cd9tEYgfEcksT\r\n\tENtfDn75BurhfoXNoVd0HjRPlBrU0rwd5vf9L",
+            "x-gm-gg": "X-Gm-Gg: ASbGnct66QuDrzPBviEe2WQt0P/dSKkB0ileYOOGuUpNiJDMNegYodq45MNBunLKtc3\r\n\tJ7YMJXRUJFHgiNwN9ZQ65NDl7npbb3H6J7I6yW0+ZJoRwSdtWrDVPs7CDKLXZfFnoVlNqouZKEC\r\n\tH/yJdLemOufxpLndDBHfRpoUrgJ0uQz56mGVSp9NAG3F9Uy+jTb2Hec5LhLdVAvsu85pM=",
+            "x-google-smtp-source": "X-Google-Smtp-Source: AGHT+IE9DiLApBePuWoDS4R8Dw0WZduOBVddNgt3f7VyTtAqvIzgOUtPq6qOG64kOY8p6ioBCx94+Qsywo6K5dWYIgw=",
+            "mime-version": "MIME-Version: 1.0",
+            "from": "From: Siva P <sivaalgebra27@gmail.com>",
+            "date": "Date: Thu, 5 Jun 2025 11:26:19 +0530",
+            "x-gm-features": "X-Gm-Features: AX0GCFusAI7HbO3uSoG3dOzXyOJ4bnGnmbzoC8sqquZUBpLVZu5TJaLOKaUgsSw",
+            "message-id": "Message-ID: <CAO8sq3sqnwWVEj7dyFWWRKTj9RaBWfPFt6kH81Qr+yO9dwU-qw@mail.gmail.com>",
+            "subject": "Subject: n8n_starting",
+            "to": "To: sivapushparaj274@gmail.com",
+            "content-type": "Content-Type: multipart/alternative; boundary=\"000000000000673e3e0636ccc6e0\""
+          },
+          "html": "<div dir=\"ltr\">hi can you please tell me about galaxy ai in samsung S25</div>\n",
+          "text": "hi can you please tell me about galaxy ai in samsung S25\n",
+          "textAsHtml": "<p>hi can you please tell me about galaxy ai in samsung S25</p>",
+          "subject": "n8n_starting",
+          "date": "2025-06-05T05:56:19.000Z",
+          "to": {
+            "value": [
+              {
+                "address": "sivapushparaj274@gmail.com",
+                "name": ""
+              }
+            ],
+            "html": "<span class=\"mp_address_group\"><a href=\"mailto:sivapushparaj274@gmail.com\" class=\"mp_address_email\">sivapushparaj274@gmail.com</a></span>",
+            "text": "sivapushparaj274@gmail.com"
+          },
+          "from": {
+            "value": [
+              {
+                "address": "sivaalgebra27@gmail.com",
+                "name": "Siva P"
+              }
+            ],
+            "html": "<span class=\"mp_address_group\"><span class=\"mp_address_name\">Siva P</span> &lt;<a href=\"mailto:sivaalgebra27@gmail.com\" class=\"mp_address_email\">sivaalgebra27@gmail.com</a>&gt;</span>",
+            "text": "\"Siva P\" <sivaalgebra27@gmail.com>"
+          },
+          "messageId": "<CAO8sq3sqnwWVEj7dyFWWRKTj9RaBWfPFt6kH81Qr+yO9dwU-qw@mail.gmail.com>"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Classifier": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Adding a label",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Adding a label": {
+      "main": [
+        [
+          {
+            "node": "Replay for query by customer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "cdad7e86-3b62-4db6-a04a-d1bb500997ac",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8fddc4502c5ab6838e8ca0386474ab2f77d11b46171a45f30d785b391042fd02"
+  },
+  "id": "pE80ZCODRWCzmh6H",
+  "tags": []
+}

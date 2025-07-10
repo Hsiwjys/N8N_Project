@@ -1,0 +1,324 @@
+{
+  "name": "linked content creation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -220,
+        60
+      ],
+      "id": "6336e1be-6aec-41e8-9ce6-1dc149df3fcd",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1tKEIvMWlekccvIBreBJVkSgMtKUv1qjox8tdnetQ2LA",
+          "mode": "list",
+          "cachedResultName": "n8n_linked_flow",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1tKEIvMWlekccvIBreBJVkSgMtKUv1qjox8tdnetQ2LA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1tKEIvMWlekccvIBreBJVkSgMtKUv1qjox8tdnetQ2LA/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Satus",
+              "lookupValue": "To Do"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -20,
+        -160
+      ],
+      "id": "0f6ac12b-1fd1-4cbc-91e2-76963f26c1ba",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "TAirqDunfaPQO3JY",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.tavily.com/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": \"search web for {{ $json.Topic }}\",\n  \"topic\": \"general\",\n  \"search_depth\": \"basic\",\n  \"chunks_per_source\": 3,\n  \"max_results\": 3,\n  \"time_range\": null,\n  \"days\": 7,\n  \"include_answer\": true,\n  \"include_raw_content\": true,\n  \"include_images\": false,\n  \"include_image_descriptions\": false,\n  \"include_domains\": [],\n  \"exclude_domains\": [],\n  \"country\": null\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        200,
+        -160
+      ],
+      "id": "4b98154e-b145-42e9-989a-127f382b34a1",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=content 1: {{ $json.results[0].content }}\ncontent 2: {{ $json.results[1].content }}\ncontent 3: {{ $json.results[2].content }}",
+        "options": {
+          "systemMessage": "# Overview  \nYou are an AI agent responsible for crafting concise, professional LinkedIn posts using insights from three given articles.  \n\n## Context  \n- The target audience is entrepreneurs, startup founders, and business leaders.  \n- Posts should distill key ideas from the articles into an inspiring and insightful message.  \n- The tone should be motivating, forward-thinking, and credible.  \n- Posts must include relevant hashtags and appropriate use of emojis to enhance engagement.  \n\n## Instructions  \n1. Read and synthesize the core message or insight from each of the three articles.  \n2. Identify a unifying theme or takeaway that resonates with entrepreneurial audiences.  \n3. Write a single LinkedIn post (max 700 characters) that captures this theme in a clear and inspiring tone.  \n4. Add 3-5 relevant hashtags tailored to the entrepreneurial space.  \n5. Include 1-3 appropriate emojis that match the tone and message without overwhelming the post.   \n\n## Examples  \n- Input: Three articles on AI in business, automation trends, and startup growth tactics.  \n- Output:  \n  \"AI isn't just the future — it's today's advantage. 🚀 From streamlining operations to scaling smarter, startups that embrace automation are leading the pack. The edge is real. #AIForBusiness #StartupGrowth #Innovation #EntrepreneurMindset\"  \n\n## SOP (Standard Operating Procedure)  \n1. Parse and summarize each article in 1-2 sentences.  \n2. Identify a shared insight or entrepreneurial lesson.  \n3. Draft a LinkedIn post that encapsulates this message in ≤ 700 characters.  \n4. Add 3-5 relevant hashtags focused on startups, business, and innovation.  \n5. Insert 1-3 relevant emojis that enhance tone without distracting.  \n6. Output the final post in plain text, ready to publish.  \n\n## Final Notes  \n- Keep posts human-like, inspiring, and high-value.  \n- Avoid jargon, filler, or repeating content from the articles verbatim.  \n- Prioritize clarity, brevity, and originality.  \n---\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        420,
+        -160
+      ],
+      "id": "2e4d86b8-ffdd-4e9c-906a-d2bb26e3271b",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash-preview-05-20",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        420,
+        40
+      ],
+      "id": "ea6240c4-4a97-4f14-924d-a92a5c6cfc90",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "qxUN951wqSdsv8U2",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1tKEIvMWlekccvIBreBJVkSgMtKUv1qjox8tdnetQ2LA",
+          "mode": "list",
+          "cachedResultName": "n8n_linked_flow",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1tKEIvMWlekccvIBreBJVkSgMtKUv1qjox8tdnetQ2LA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1tKEIvMWlekccvIBreBJVkSgMtKUv1qjox8tdnetQ2LA/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Topic": "={{ $('Google Sheets').item.json.Topic }}",
+            "content": "={{ $json.output }}",
+            "Satus": "completed"
+          },
+          "matchingColumns": [
+            "Topic"
+          ],
+          "schema": [
+            {
+              "id": "Topic",
+              "displayName": "Topic",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Satus",
+              "displayName": "Satus",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "content",
+              "displayName": "content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        780,
+        -160
+      ],
+      "id": "2b174527-bc3b-4ca9-ba26-51b27b7b15ac",
+      "name": "Google Sheets1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "TAirqDunfaPQO3JY",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "### 📌 Workflow Note: Linked Content Generation with AI\n\n#### 🔄 Objective:\n#### Automatically generate LinkedIn content (or descriptions) using product/topic data from Google Sheets, enriched by API data, and written back to Google Sheets.\n#### 🧩 Steps:\n##### 1. **Manual Trigger / Scheduled** – Starts the workflow.\n##### 2. **Google Sheets Read** – Gets topic or product details.\n##### 3. **HTTP Request** – Uses Tavily API to fetch additional context or summaries.\n##### 4. **AI Agent** – Powered by Google Gemini Chat to create human-like content.\n##### 5. **Google Sheets Update** – Writes the generated output back for publishing or review.\n\n##### 👨‍💻 Created by: Siva P  \n##### 📅 Last Updated: 6.6.2025\n",
+        "height": 640
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -520,
+        -240
+      ],
+      "typeVersion": 1,
+      "id": "566520e7-b22b-4823-9abb-74d16b5b9247",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        -160
+      ],
+      "id": "27c5eca3-8a93-4fe7-b61c-9b2641ff4d65",
+      "name": "Manaul trigger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manaul trigger": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "61e3564f-6c7a-4db2-b447-81700063ad71",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8fddc4502c5ab6838e8ca0386474ab2f77d11b46171a45f30d785b391042fd02"
+  },
+  "id": "tLLqYGmLk3aYWzSA",
+  "tags": []
+}
